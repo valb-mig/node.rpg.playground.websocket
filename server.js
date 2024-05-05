@@ -1,30 +1,27 @@
-const { createServer } = require("http");
-const { Server } = require("socket.io");
+const WebSocket = require('ws');
 
-const port = 3000;
+const wss = new WebSocket.Server({
+  port: 5000
+});
 
-const httpServer = createServer();
-
-const io = new Server(httpServer);
-
-io.on('connection', (socket) => {
+wss.on('connection', (socket) => {
     console.log('user connected');
 
-    socket.on('rollDice', (maxNumber) => {
-        let randomNumber = Math.floor(Math.random() * (maxNumber - 1 + 1)) + 1
-        io.emit('diceRoll', randomNumber);
+    socket.on('message', (message) => {
+        try {
+            const { type, payload } = JSON.parse(message);
+            if (type === 'rollDice') {
+                let randomNumber = Math.floor(Math.random() * (payload - 1 + 1)) + 1
+                socket.send(JSON.stringify({ type: 'diceRoll', payload: randomNumber }));
+            }
+        } catch (error) {
+            console.error('Error parsing message:', error);
+        }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('close', () => {
         console.log('user disconnected');
     });
 });
 
-httpServer
-    .once("error", (err) => {
-        console.error(err);
-        process.exit(1);
-    })
-    .listen(port, () => {
-        console.log(`Server is listening on port ${port}`);
-    });
+console.log(new Date() + ": Hello :), on port - " + 5000);
