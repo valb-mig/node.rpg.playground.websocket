@@ -5,14 +5,14 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*",
   },
 });
 
 const socketInfoMap = new Map();
 
 io.on("connection", (socket) => {
-  console.log("[Websocket] User connected");
+  console.log("[Websocket] Socket connected");
 
   // Hello
 
@@ -20,7 +20,7 @@ io.on("connection", (socket) => {
 
     let user = JSON.parse(userInfo.user_data);
 
-    console.log("Hello Character: ", user.character_name);
+    console.log("\n### Hello Character: "+user.character_name+" ###\n");
     socket.join(user.room);
 
     const otherUsers = getUsersSocket(user.room);
@@ -31,12 +31,19 @@ io.on("connection", (socket) => {
   // Enter Room
 
   socket.on("req_enter_room", (userInfo) => {
-    console.log(
-      `[Websocket] Enter room: ${userInfo.room}, user: ${userInfo.user_data}`,
-    );
+    
+    console.log(`[Websocket] Enter room: ${userInfo.room}, user: ${userInfo.user_data}`);
+
     socket.join(userInfo.room);
-    socketInfoMap.set(socket.id, userInfo);
-    io.to(userInfo.room).emit("res_enter_room", userInfo.user_data);
+
+    const userSocketId = socket.id;
+    
+    let userObject = JSON.parse(userInfo.user_data);
+    userObject.socket_id = userSocketId;
+
+    socketInfoMap.set(userSocketId, userObject);
+
+    io.to(userInfo.room).emit("res_enter_room", userSocketId);
   });
 
   // Roll Dice
@@ -49,10 +56,20 @@ io.on("connection", (socket) => {
 
   // Map
 
-  socket.on("req_map_movement", (userObject) => {
+  socket.on("req_map_movement", (requestObject) => {
+    console.log(`[Websocket] Movement - Column: ${requestObject.col} - Line: ${requestObject.row}`);
 
-    console.log(`[Websocket] Movement - Column: ${userObject.col} - Line: ${userObject.row}`);
-    io.to(userObject.room).emit("res_map_movement", userObject.user_data);
+    const otherUsers = getUsersSocket(requestObject.room);
+    const userObject = JSON.parse(requestObject.user_data);
+
+    userObject.position = {
+      row: requestObject.row,
+      col: requestObject.col
+    };
+
+    socketInfoMap.set(userObject.socket_id, userObject);
+
+    io.to(requestObject.room).emit("res_map_movement", userObject, otherUsers);
   });
 
   socket.on("disconnect", () => {
@@ -61,16 +78,17 @@ io.on("connection", (socket) => {
 });
 
 const getUsersSocket = (room) => {
+
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
 
-  console.log(socketIdsInRoom);
-
   let returnObject = {}; // Usar um objeto em vez de um array
 
-  socketIdsInRoom.forEach((socketId) => {
+  socketIdsInRoom.map((socketId) => {
     returnObject[socketId] = socketInfoMap.get(socketId);
   });
+
+  console.log(returnObject);
 
   return returnObject;
 };
