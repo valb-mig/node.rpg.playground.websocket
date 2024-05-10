@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+
+  rpg_websocket:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: rpg_websocket
+    container_name: rpg_websocket-rpg_websocket
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - 4000:4000
+    volumes:
+      - ./:/app
+    networks:
+      - rpg_websocket
+
+networks:
+  rpg_websocket:
+    driver: bridge

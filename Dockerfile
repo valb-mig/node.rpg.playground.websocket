@@ -6,8 +6,10 @@ COPY package*.json ./
 
 RUN npm install
 
+# RUN npm install --save-dev nodemon
+
 COPY . .
 
 EXPOSE 4000
 
-CMD ["node", "server.js"]
+CMD ["npx", "nodemon", "server.js"]
