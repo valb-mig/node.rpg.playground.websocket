@@ -14,7 +14,7 @@ const socketInfoMap = new Map();
 io.on("connection", (socket) => {
   console.log("[Websocket] Socket connected");
 
-  // Hello
+  // Hello current users
 
   socket.on("req_hello", (userInfo) => {
 
@@ -39,6 +39,7 @@ io.on("connection", (socket) => {
     const userSocketId = socket.id;
     
     let userObject = JSON.parse(userInfo.user_data);
+    
     userObject.socket_id = userSocketId;
 
     socketInfoMap.set(userSocketId, userObject);
@@ -48,10 +49,21 @@ io.on("connection", (socket) => {
 
   // Roll Dice
 
-  socket.on("req_roll_dice", (roomData) => {
-    console.log(`[Websocket] Roll dice room: ${roomData.room}`);
-    let randomNumber = Math.floor(Math.random() * (roomData.max - 1 + 1)) + 1;
-    io.to(roomData.room).emit("res_roll_dice", randomNumber);
+  socket.on("req_roll_dice", (requestObject) => {
+
+    console.log(`[Websocket] Roll dice room: ${requestObject.room}`);
+    
+    const otherUsers   = getUsersSocket(requestObject.room);
+    const randomNumber = Math.floor(Math.random() * (requestObject.max - 1 + 1)) + 1;
+    
+    const userObject = JSON.parse(requestObject.user_data);
+    const userData = socketInfoMap.get(userObject.socket_id)
+
+    userData.dice = randomNumber;
+
+    socketInfoMap.set(userObject.socket_id, userData);
+
+    io.to(requestObject.room).emit("res_roll_dice", otherUsers, userData);
   });
 
   // Map
@@ -60,20 +72,32 @@ io.on("connection", (socket) => {
     console.log(`[Websocket] Movement - Column: ${requestObject.col} - Line: ${requestObject.row}`);
 
     const otherUsers = getUsersSocket(requestObject.room);
-    const userObject = JSON.parse(requestObject.user_data);
 
-    userObject.position = {
+    const userObject = JSON.parse(requestObject.user_data);
+    const userData = socketInfoMap.get(userObject.socket_id)
+
+    userData.position = {
       row: requestObject.row,
       col: requestObject.col
     };
 
-    socketInfoMap.set(userObject.socket_id, userObject);
+    socketInfoMap.set(userObject.socket_id, userData);
 
-    io.to(requestObject.room).emit("res_map_movement", userObject, otherUsers);
+    io.to(requestObject.room).emit("res_map_movement", userData, otherUsers);
   });
 
   socket.on("disconnect", () => {
-    console.log("[Websocket] user disconnected");
+    let disconnectedUser = socketInfoMap.get(socket.id);
+
+    if(disconnectedUser != undefined) {
+
+      console.log(`[Websocket] user: ${disconnectedUser.character_name} disconnected`);
+
+      const otherUsers = getUsersSocket(disconnectedUser.room_code);
+
+      io.to(disconnectedUser.room_code).emit("res_hello", otherUsers);
+      socketInfoMap.delete(socket.id);
+    }
   });
 });
 
@@ -82,7 +106,7 @@ const getUsersSocket = (room) => {
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
 
-  let returnObject = {}; // Usar um objeto em vez de um array
+  let returnObject = {};
 
   socketIdsInRoom.map((socketId) => {
     returnObject[socketId] = socketInfoMap.get(socketId);
