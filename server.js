@@ -18,6 +18,9 @@ io.on("connection", (socket) => {
 
   socket.on("req_hello", (userInfo) => {
 
+    console.log('ppppppppppppppppppppPPPPPPPPPPPPPPP');
+    console.log(userInfo);
+
     let user = JSON.parse(userInfo.user_data);
 
     console.log("\n### Hello Character: "+user.character_name+" ###\n");
@@ -36,15 +39,21 @@ io.on("connection", (socket) => {
 
     socket.join(userInfo.room);
 
-    const userSocketId = socket.id;
-    
+    let userSocketId = 0;
+
     let userObject = JSON.parse(userInfo.user_data);
+    
+    if(userObject.socket_id != undefined && userObject.socket_id != null) {
+      userSocketId = userObject.socket_id;
+    } else {
+      userSocketId = socket.id;
+    }
     
     userObject.socket_id = userSocketId;
 
-    socketInfoMap.set(userSocketId, userObject);
+    socketInfoMap.set(userObject.socket_id, userObject);
 
-    io.to(userInfo.room).emit("res_enter_room", userSocketId);
+    io.to(userInfo.room).emit("res_enter_room", userObject.socket_id);
   });
 
   // Roll Dice
@@ -91,7 +100,7 @@ io.on("connection", (socket) => {
 
     if(disconnectedUser != undefined) {
 
-      console.log(`[Websocket] user: ${disconnectedUser.character_name} disconnected`);
+      console.log(`[Websocket] user:   ${disconnectedUser.character_name} disconnected`);
 
       const otherUsers = getUsersSocket(disconnectedUser.room_code);
 
@@ -101,7 +110,11 @@ io.on("connection", (socket) => {
   });
 });
 
+// [TODO] - Pegar os sockets de acordo com o array, e não pelo socket io "LIVE"
+
 const getUsersSocket = (room) => {
+
+  console.log(room);
 
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
