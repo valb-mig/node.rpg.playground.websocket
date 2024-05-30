@@ -18,17 +18,12 @@ io.on("connection", (socket) => {
 
   socket.on("req_hello", (userInfo) => {
 
-    console.log('ppppppppppppppppppppPPPPPPPPPPPPPPP');
-    console.log(userInfo);
-
     let user = JSON.parse(userInfo.user_data);
 
     console.log("\n### Hello Character: "+user.character_name+" ###\n");
+
     socket.join(user.room);
-
-    const otherUsers = getUsersSocket(user.room);
-
-    io.to(user.room).emit("res_hello", otherUsers);
+    io.to(user.room).emit("res_hello", getUsersSocket(user.room));
   });
 
   // Enter Room
@@ -38,22 +33,8 @@ io.on("connection", (socket) => {
     console.log(`[Websocket] Enter room: ${userInfo.room}, user: ${userInfo.user_data}`);
 
     socket.join(userInfo.room);
-
-    let userSocketId = 0;
-
-    let userObject = JSON.parse(userInfo.user_data);
-    
-    if(userObject.socket_id != undefined && userObject.socket_id != null) {
-      userSocketId = userObject.socket_id;
-    } else {
-      userSocketId = socket.id;
-    }
-    
-    userObject.socket_id = userSocketId;
-
-    socketInfoMap.set(userObject.socket_id, userObject);
-
-    io.to(userInfo.room).emit("res_enter_room", userObject.socket_id);
+    socketInfoMap.set(socket.id, JSON.parse(userInfo.user_data));
+    io.to(userInfo.room).emit("res_enter_room", socket.id);
   });
 
   // Roll Dice
@@ -64,13 +45,12 @@ io.on("connection", (socket) => {
     
     const otherUsers   = getUsersSocket(requestObject.room);
     const randomNumber = Math.floor(Math.random() * (requestObject.max - 1 + 1)) + 1;
-    
-    const userObject = JSON.parse(requestObject.user_data);
-    const userData = socketInfoMap.get(userObject.socket_id)
+
+    const userData = socketInfoMap.get(socket.id);
 
     userData.dice = randomNumber;
 
-    socketInfoMap.set(userObject.socket_id, userData);
+    socketInfoMap.set(socket.id, userData);
 
     io.to(requestObject.room).emit("res_roll_dice", otherUsers, userData);
   });
@@ -81,16 +61,14 @@ io.on("connection", (socket) => {
     console.log(`[Websocket] Movement - Column: ${requestObject.col} - Line: ${requestObject.row}`);
 
     const otherUsers = getUsersSocket(requestObject.room);
-
-    const userObject = JSON.parse(requestObject.user_data);
-    const userData = socketInfoMap.get(userObject.socket_id)
+    const userData = socketInfoMap.get(socket.id);
 
     userData.position = {
       row: requestObject.row,
       col: requestObject.col
     };
 
-    socketInfoMap.set(userObject.socket_id, userData);
+    socketInfoMap.set(socket.id, userData);
 
     io.to(requestObject.room).emit("res_map_movement", userData, otherUsers);
   });
@@ -110,12 +88,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// [TODO] - Pegar os sockets de acordo com o array, e não pelo socket io "LIVE"
-
 const getUsersSocket = (room) => {
-
-  console.log(room);
-
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
 
