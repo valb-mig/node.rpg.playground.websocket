@@ -33,7 +33,16 @@ io.on("connection", (socket) => {
     console.log(`[Websocket] Enter room: ${userInfo.room}, user: ${userInfo.user_data}`);
 
     socket.join(userInfo.room);
-    socketInfoMap.set(socket.id, JSON.parse(userInfo.user_data));
+
+    let userObject = JSON.parse(userInfo.user_data);
+
+    if(Object.keys(getUsersSocket(userInfo.room)).length <= 1) {
+      userObject.role = "gm";
+    } else {
+      userObject.role = "player";
+    }
+
+    socketInfoMap.set(socket.id, userObject);
     io.to(userInfo.room).emit("res_enter_room", socket.id);
   });
 
@@ -97,8 +106,6 @@ const getUsersSocket = (room) => {
   socketIdsInRoom.map((socketId) => {
     returnObject[socketId] = socketInfoMap.get(socketId);
   });
-
-  console.log(returnObject);
 
   return returnObject;
 };
