@@ -10,6 +10,7 @@ const io = new Server(httpServer, {
 });
 
 const socketInfoMap = new Map();
+const socketRoomInfoMap = new Map();
 
 io.on("connection", (socket) => {
   console.log("[Websocket] Socket connected");
@@ -20,10 +21,12 @@ io.on("connection", (socket) => {
 
     let user = JSON.parse(userInfo.user_data);
 
-    console.log("\n### Hello Character: "+user.character_name+" ###\n");
+    console.log("\n### Hello Character: "+user.character_name+" room: "+userInfo.room+" ###\n");
 
-    socket.join(user.room);
-    io.to(user.room).emit("res_hello", getUsersSocket(user.room));
+    const roomData = socketRoomInfoMap.get('room_data_'+userInfo.room);
+
+    socket.join(userInfo.room);
+    io.to(userInfo.room).emit("res_hello", getUsersSocket(userInfo.room), roomData);
   });
 
   // Enter Room
@@ -59,6 +62,8 @@ io.on("connection", (socket) => {
 
     userData.dice = randomNumber;
 
+    socket.join(requestObject.room);
+
     socketInfoMap.set(socket.id, userData);
 
     io.to(requestObject.room).emit("res_roll_dice", otherUsers, userData);
@@ -69,35 +74,65 @@ io.on("connection", (socket) => {
   socket.on("req_map_movement", (requestObject) => {
     console.log(`[Websocket] Movement - Column: ${requestObject.col} - Line: ${requestObject.row}`);
 
-    const otherUsers = getUsersSocket(requestObject.room);
     const userData = socketInfoMap.get(socket.id);
+    const otherUsers = getUsersSocket(userData.room_code);
 
     userData.position = {
       row: requestObject.row,
       col: requestObject.col
     };
+  
+    socket.join(userData.room_code);
 
     socketInfoMap.set(socket.id, userData);
 
-    io.to(requestObject.room).emit("res_map_movement", userData, otherUsers);
+    io.to(userData.room_code).emit("res_map_movement", userData, otherUsers);
   });
+
+  socket.on("req_gm_room_data", (requestObject) => {
+    console.log(`[Websocket] GM Room Data - Room: ${requestObject.room}`);
+    
+    console.log(requestObject);
+
+    socket.join(requestObject.room);
+
+    const roomData = socketRoomInfoMap.get('room_data_'+requestObject.room);
+
+    socketRoomInfoMap.set('room_data_'+requestObject.room, {
+      ...roomData,
+      room: requestObject.room,
+      [requestObject.key]: requestObject.value
+    });
+
+    io.to(requestObject.room).emit("res_gm_room_data", {
+      key: requestObject.key, 
+      value: requestObject.value
+    });
+  })
 
   socket.on("disconnect", () => {
     let disconnectedUser = socketInfoMap.get(socket.id);
 
     if(disconnectedUser != undefined) {
 
-      console.log(`[Websocket] user:   ${disconnectedUser.character_name} disconnected`);
+      console.log(`[Websocket] user: ${disconnectedUser.character_name} disconnected`);
 
       const otherUsers = getUsersSocket(disconnectedUser.room_code);
 
       io.to(disconnectedUser.room_code).emit("res_hello", otherUsers);
       socketInfoMap.delete(socket.id);
+
+      if(Object.keys(getUsersSocket(disconnectedUser.room_code)).length < 1) {
+        console.log(`[Websocket] Goodbye: ${disconnectedUser.room_code}`);
+        socketRoomInfoMap.delete('room_data_'+disconnectedUser.room_code);
+      }
+
     }
   });
 });
 
 const getUsersSocket = (room) => {
+  
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
 
