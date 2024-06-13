@@ -1,13 +1,10 @@
-const { createServer } = require("http");
-const { Server } = require("socket.io");
+import io from "./config/socket";
 
-const httpServer = createServer();
-
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
+import { 
+  RoomData, 
+  UserInfo, 
+  RoomUsersObject 
+} from "./config/types";
 
 const socketInfoMap = new Map();
 const socketRoomInfoMap = new Map();
@@ -131,7 +128,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const getUsersSocket = (room) => {
+const getUsersSocket = (room: any) => {
   
   const socketsInRoom = io.sockets.adapter.rooms.get(room);
   const socketIdsInRoom = socketsInRoom ? Array.from(socketsInRoom) : [];
@@ -139,19 +136,8 @@ const getUsersSocket = (room) => {
   let returnObject = {};
 
   socketIdsInRoom.map((socketId) => {
-    returnObject[socketId] = socketInfoMap.get(socketId);
+    // returnObject[socketId] = socketInfoMap.get(socketId);
   });
 
   return returnObject;
 };
-
-const port = 4000;
-
-httpServer
-  .once("error", (err) => {
-    console.error(err);
-    process.exit(1);
-  })
-  .listen(port, () => {
-    console.log(`[Websocket] Server started ${port}`);
-  });
