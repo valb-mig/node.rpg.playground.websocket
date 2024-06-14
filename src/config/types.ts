@@ -1,6 +1,7 @@
-export type RoomData = {
-    location?: string,
-    showcase?: string
+export type gmRoomData = {
+    room: string,
+    key: 'location' | 'showcase',
+    value: string
 }
 
 export type MapPosition = {
