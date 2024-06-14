@@ -2,11 +2,12 @@
   "name": "node.rpg.playground.websocket",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
     "prettier": "npx prettier . --write",
-    "start": "node --watch server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --watch dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "prettier": "3.2.5"
+    "prettier": "3.2.5",
+    "typescript": "^5.4.5"
   }
 }
