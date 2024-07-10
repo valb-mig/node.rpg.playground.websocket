@@ -18,6 +18,40 @@ export interface UserInfo {
     role?: string
 }
 
-export interface RoomUsersObject {
-    [index: string]: UserInfo;
+export interface RoomCharacters {
+    [index: string]: CharacterInfo;
 }
+
+/* Characters */
+
+interface CharacterInfo {
+    name: string;
+    life: number;
+    notes: string;
+    age: number;
+    gold: number;
+    character_id: number;
+    inventory: CharacterInventory[];
+    stats: CharacterStats[];
+}
+
+interface CharacterStats {
+    stat: string;
+    value: string;
+}
+
+interface CharacterInventory {
+    item: string;
+    quant: number;
+    icon?: string;
+}
+
+export interface CharacterSocketInfo extends CharacterInfo {
+    room: string;
+    dice?: number;
+    position?: {
+        row: number;
+        col: number;
+    };
+}
+  
