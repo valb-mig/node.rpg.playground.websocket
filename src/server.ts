@@ -57,16 +57,18 @@ io.on("connection", (socket) => {
   * @param {number} max
   **/ 
 
-  socket.on("req_roll_dice", (userData: UserInfo, max: number) => {
+  socket.on("req_roll_dice", ( characterInfo: CharacterSocketInfo, max: number ) => {
 
-    console.log(`[Websocket] User: ${userData.character_name} Roll dice room: ${userData.room_code}`);
+    console.log(`[Websocket] User: ${characterInfo.name} Roll dice room: ${characterInfo.room}`);
     
-    const otherUsers = getUsersSocket(userData.room_code);
+    const otherUsers = getUsersSocket(characterInfo.room);
     const randomNumber = Math.floor(Math.random() * (max - 1 + 1)) + 1;
 
-    const socketUserData: UserInfo = socketInfoMap.get(socket.id);
+    const socketCharacters: CharacterSocketInfo = socketInfoMap.get(socket.id);
 
-    if(socketUserData.uuid == userData.uuid) {
+    // [TODO] Ajust
+
+    if(socketCharacters.uuid == characterInfo.uuid) {
 
       userData = {
         ...userData,
