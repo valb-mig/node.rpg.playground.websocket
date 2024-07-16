@@ -58,31 +58,33 @@ io.on("connection", (socket) => {
   **/ 
 
   socket.on("req_roll_dice", ( characterInfo: CharacterSocketInfo, max: number ) => {
-
-    console.log(`[Websocket] User: ${characterInfo.name} Roll dice room: ${characterInfo.room}`);
+ 
+    console.log(`[Websocket] User: ${characterInfo.name}, Roll dice room: ${characterInfo.room}`);
     
-    const otherUsers = getUsersSocket(characterInfo.room);
-    const randomNumber = Math.floor(Math.random() * (max - 1 + 1)) + 1;
+    const roomUsers = getUsersSocket(characterInfo.room);
 
-    const socketCharacters: CharacterSocketInfo = socketInfoMap.get(socket.id);
+    const randomNumber = Math.floor(Math.random() * (max - 1 + 1)) + 1;
+    // const socketCharacters: CharacterSocketInfo = socketInfoMap.get(socket.id);
 
     // [TODO] Ajust
 
-    if(socketCharacters.uuid == characterInfo.uuid) {
+    // if(socketCharacters.uuid == characterInfo.uuid) {
 
-      userData = {
-        ...userData,
-        position: socketUserData?.position,
-        role: socketUserData?.role,
-        dice: randomNumber
-      }
-    }
+    //   userData = {
+    //     ...userData,
+    //     position: socketUserData?.position,
+    //     role: socketUserData?.role,
+    //     dice: randomNumber
+    //   }
+    // }
 
-    socket.join(userData.room_code);
+    socket.join(characterInfo.room);
+    socketInfoMap.set(socket.id, characterInfo);
 
-    socketInfoMap.set(socket.id, userData);
-
-    io.to(userData.room_code).emit("res_roll_dice", userData, otherUsers);
+    io.to(characterInfo.room).emit("res_roll_dice", 
+      roomUsers,
+      randomNumber
+    );
   });
 
   /** 
@@ -157,7 +159,7 @@ io.on("connection", (socket) => {
       socketInfoMap.delete(socket.id);
 
       if(Object.keys(getUsersSocket(disconnectedUser.room)).length < 1) {
-        console.log(`[Websocket] Goodbye: ${disconnectedUser.room}`);
+        console.log(`[Websocket] Goodbye: ${disconnectedUser.name}, room: ${disconnectedUser.room}`);
         socketRoomInfoMap.delete('room_data_'+disconnectedUser.room);
       }
     }
