@@ -42,9 +42,6 @@ io.on("connection", (socket) => {
     console.log(`[Websocket] Enter room: ${room}, user: ${characterInfo.name}`);
     socket.join(room);
 
-    // Add room to character info
-    characterInfo.room = room;
-
     socketInfoMap.set(socket.id, characterInfo);
 
     io.to(room).emit("res_hello", getUsersSocket(room));
@@ -61,30 +58,16 @@ io.on("connection", (socket) => {
  
     console.log(`[Websocket] User: ${characterInfo.name}, Roll dice room: ${characterInfo.room}`);
     
-    const roomUsers = getUsersSocket(characterInfo.room);
-
     const randomNumber = Math.floor(Math.random() * (max - 1 + 1)) + 1;
-    // const socketCharacters: CharacterSocketInfo = socketInfoMap.get(socket.id);
 
-    // [TODO] Ajust
-
-    // if(socketCharacters.uuid == characterInfo.uuid) {
-
-    //   userData = {
-    //     ...userData,
-    //     position: socketUserData?.position,
-    //     role: socketUserData?.role,
-    //     dice: randomNumber
-    //   }
-    // }
+    // Add dice to character info
+    characterInfo.dice = randomNumber;
 
     socket.join(characterInfo.room);
     socketInfoMap.set(socket.id, characterInfo);
 
-    io.to(characterInfo.room).emit("res_roll_dice", 
-      roomUsers,
-      randomNumber
-    );
+    io.to(characterInfo.room).emit("res_hello", getUsersSocket(characterInfo.room));
+    io.to(characterInfo.room).emit("res_roll_dice", randomNumber);
   });
 
   /** 
