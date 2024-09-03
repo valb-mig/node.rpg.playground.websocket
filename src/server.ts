@@ -67,7 +67,10 @@ io.on("connection", (socket) => {
     socketInfoMap.set(socket.id, characterInfo);
 
     io.to(characterInfo.room).emit("res_hello", getUsersSocket(characterInfo.room));
-    io.to(characterInfo.room).emit("res_roll_dice", randomNumber);
+    io.to(characterInfo.room).emit("res_roll_dice", 
+      characterInfo,
+      randomNumber
+    );
   });
 
   /** 
