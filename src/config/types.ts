@@ -25,6 +25,7 @@ export interface RoomCharacters {
 /* Characters */
 
 interface CharacterInfo {
+    room: string;
     name: string;
     life: number;
     notes: string;
@@ -47,7 +48,7 @@ interface CharacterInventory {
 }
 
 export interface CharacterSocketInfo extends CharacterInfo {
-    room: string;
+    uuid: string;
     dice?: number;
     position?: {
         row: number;
