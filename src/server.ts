@@ -81,17 +81,17 @@ io.on("connection", (socket) => {
   * @param {number} col
   **/ 
 
-  socket.on("req_map_movement", (userData: UserInfo, row: number, col: number) => {
+  socket.on("req_map_movement", (charachterSocektInfo: CharacterSocketInfo, row: number, col: number) => {
 
-    console.log(`[Websocket] User: ${userData.character_name} | Movement - Column: ${col} - Line: ${row}`);
+    console.log(`[Websocket] Character: ${charachterSocektInfo.name} | Movement - Column: ${col} - Line: ${row}`);
 
     const socketUserData = socketInfoMap.get(socket.id);
-    const otherUsers = getUsersSocket(userData.room_code);
+    const otherUsers = getUsersSocket(charachterSocektInfo.room);
 
-    if(socketUserData.uuid == userData.uuid) {
+    if(socketUserData.uuid == charachterSocektInfo.uuid) {
 
-      userData = {
-        ...userData,
+      charachterSocektInfo = {
+        ...charachterSocektInfo,
         position: {
           row: row,
           col: col
@@ -101,11 +101,10 @@ io.on("connection", (socket) => {
       }
     }
    
-    socket.join(userData.room_code);
+    socket.join(charachterSocektInfo.room);
+    socketInfoMap.set(socket.id, charachterSocektInfo);
 
-    socketInfoMap.set(socket.id, userData);
-
-    io.to(userData.room_code).emit("res_map_movement", userData, otherUsers);
+    io.to(charachterSocektInfo.room).emit("res_map_movement", charachterSocektInfo, otherUsers);
   });
 
   /** 

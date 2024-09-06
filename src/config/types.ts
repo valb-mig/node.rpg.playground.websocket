@@ -25,8 +25,10 @@ export interface RoomCharacters {
 /* Characters */
 
 interface CharacterInfo {
-    room: string;
     name: string;
+    role: string;
+    room: string;
+    xp:   number;
     life: number;
     notes: string;
     age: number;
