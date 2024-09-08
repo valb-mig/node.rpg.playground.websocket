@@ -100,7 +100,7 @@ io.on("connection", (socket) => {
         dice: socketUserData?.dice
       }
     }
-   
+    
     socket.join(charachterSocektInfo.room);
     socketInfoMap.set(socket.id, charachterSocektInfo);
 
