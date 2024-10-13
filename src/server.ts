@@ -66,10 +66,12 @@ io.on("connection", (socket) => {
     socket.join(characterInfo.room);
     socketInfoMap.set(socket.id, characterInfo);
 
+    const otherUsers = getUsersSocket(characterInfo.room);
+
     io.to(characterInfo.room).emit("res_hello", getUsersSocket(characterInfo.room));
     io.to(characterInfo.room).emit("res_roll_dice", 
       characterInfo,
-      randomNumber
+      otherUsers
     );
   });
 
@@ -92,7 +94,7 @@ io.on("connection", (socket) => {
 
       charachterSocektInfo = {
         ...charachterSocektInfo,
-        position: {
+        position: { 
           row: row,
           col: col
         },
