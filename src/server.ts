@@ -110,6 +110,33 @@ io.on("connection", (socket) => {
   });
 
   /** 
+  * Map Clear
+  * 
+  * @param {UserInfo} userData
+  **/ 
+
+  socket.on("req_map_clear", (charachterSocektInfo: CharacterSocketInfo) => {
+
+    const socketUserData = socketInfoMap.get(socket.id);
+    const otherUsers = getUsersSocket(charachterSocektInfo.room);
+
+    if(socketUserData.uuid == charachterSocektInfo.uuid) {
+
+      charachterSocektInfo = {
+        ...charachterSocektInfo,
+        position: undefined,
+        role: socketUserData?.role,
+        dice: socketUserData?.dice
+      }
+    }
+    
+    socket.join(charachterSocektInfo.room);
+    socketInfoMap.set(socket.id, charachterSocektInfo);
+
+    io.to(charachterSocektInfo.room).emit("res_map_clear", charachterSocektInfo, otherUsers);
+  });
+
+  /** 
   * (GM) Update room data
   * 
   * @param {gmRoomData} roomData
