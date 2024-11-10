@@ -57,4 +57,17 @@ export interface CharacterSocketInfo extends CharacterInfo {
         col: number;
     };
 }
+
+/* Pins */
+
+export interface PinSocketInfo {
+    id: any,
+    uuid: any,
+    name: string,
+    color: string,
+    position: { 
+        row: number,
+        col: number
+    }
+};
   

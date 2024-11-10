@@ -4,10 +4,12 @@ import {
   UserInfo, 
   RoomCharacters,
   gmRoomData,
-  CharacterSocketInfo 
+  CharacterSocketInfo,
+  PinSocketInfo
 } from "./config/types";
 
 const socketInfoMap = new Map();
+const socketPinMap  = new Map();
 const socketRoomInfoMap = new Map();
 
 io.on("connection", (socket) => {
@@ -107,6 +109,38 @@ io.on("connection", (socket) => {
     socketInfoMap.set(socket.id, charachterSocektInfo);
 
     io.to(charachterSocektInfo.room).emit("res_map_movement", charachterSocektInfo, otherUsers);
+  });
+
+  socket.on("req_pin_map", (room: string, uuid: string, pinConfig: { name: string, color: string }) => {
+   
+    console.log(`[Websocket] Set ping: ${pinConfig.name}`);
+    
+    const randomUUID = crypto.randomUUID();
+
+    socket.join(room);
+
+    let pinSocketInfo = <PinSocketInfo>{
+      id: randomUUID,
+      uuid: uuid,
+      name: pinConfig.name,
+      color: pinConfig.color,
+      position: { 
+        row: 0,
+        col: 0
+      }
+    };
+
+    socketPinMap.set(randomUUID, pinSocketInfo);
+
+    let userPins: PinSocketInfo[] = [];
+
+    socketPinMap.forEach((data) => {
+      if(data.uuid == uuid) {
+        userPins.push(data);
+      }
+    });
+
+    io.to(room).emit("res_pin_map", userPins);
   });
 
   /** 
